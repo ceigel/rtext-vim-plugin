@@ -284,15 +284,16 @@ module RText
   end
 
   def self.update_problems(obj)
-    problems = []
-    wd = VIM::evaluate("getcwd()").gsub("\\", "/")
-    (obj["problems"] || []).each do |fp|
-      file = fp["file"].gsub("\\", "/").sub(wd, "").sub(/^\//, "")
-      (fp["problems"] || []).each do |p|
-        problems << "#{file}:#{p["line"]}:#{p["message"]}"
+    wd = VIM::evaluate('getcwd()').gsub("\\", "/") + '/'
+    problems = (obj['problems'] || []).flat_map do |fp|
+      file = fp['file'].gsub("\\", '/').sub(wd, "")
+      (fp['problems'] || []).map do |p|
+        "#{file}:#{p['line']}:#{p['message']}"
       end
     end
-    VIM::command("cexpr [#{problems.collect{|p| "\"#{p}\""}.join(",")}]")
+    all_problems = problems.collect{|p| "\"#{p}\""}.join(',')
+    VIM::message("#{problems.count} problems")
+    VIM::command("cexpr [#{all_problems}]")
     VIM::message("RText: model loaded, #{problems.size} problems")
   end
 
